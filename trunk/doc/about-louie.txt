@@ -28,11 +28,11 @@ Installing Louie
 ================
 
 Louie uses `easy_install`_ for installation, and is distributed via
-the `Python Package Index`_.
+the `Python Cheese Shop`_.
 
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-.. _Python Package Index: http://cheeseshop.python.org/pypi/Louie
+.. _Python Cheese Shop: http://cheeseshop.python.org/pypi/Louie
 
 If you already have `easy_install`, run this command::
 
