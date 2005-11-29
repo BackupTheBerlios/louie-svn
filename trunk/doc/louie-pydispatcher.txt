@@ -18,6 +18,8 @@ like to use or evaluate Louie.
 
 .. _Louie: http://louie.berlios.de/
 
+.. _PyDispatcher: http://cheeseshop.python.org/pypi/PyDispatcher
+
 
 Packaging and Distribution
 ==========================

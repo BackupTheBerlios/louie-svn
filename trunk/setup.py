@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-version = '1.0b1'
+from louie import version
 
 setup(
-    name='Louie',
+    name=version.NAME,
 
-    version=version,
+    version=version.VERSION,
 
-    description="Signal dispatching mechanism",
+    description=version.DESCRIPTION,
 
     long_description="""\
 Louie provides Python programmers with a straightforward way to

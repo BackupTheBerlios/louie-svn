@@ -1,0 +1,64 @@
+=============
+ About Louie
+=============
+
+Louie provides Python programmers with a straightforward way to
+dispatch signals between objects in a wide variety of contexts. It is
+based on PyDispatcher_, which in turn was based on a highly-rated
+recipe_ in the Python Cookbook.
+
+.. _PyDispatcher: http://pydispatcher.sf.net/
+
+.. _recipe: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/87056
+
+
+Read more about Louie
+=====================
+
+Further documentation may be found via our `documentation index`_.
+
+.. _documentation index: index.html
+
+
+Installing Louie from development snapshots
+===========================================
+
+Louie uses `easy_install`_ for installation.  You may also download
+from our snapshots_.
+
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+.. _snapshots: http://louie.berlios.de/snapshots/
+
+
+With easy_install
+-----------------
+
+If you already have `easy_install`, run this command::
+
+  easy_install -f http://louie.berlios.de/snapshots/ Louie
+
+If that failed, you do not have `easy_install`.  To install that,
+download `ez_setup.py`_, then run this command::
+
+  python ez_setup.py setuptools
+
+.. _ez_setup.py: http://peak.telecommunity.com/dist/ez_setup.py
+
+Then, run the `easy_install` command given above again.
+
+
+From a snapshot
+---------------
+
+Download and unpack the desired version from our snapshots_, then run
+this command::
+
+  python setup.py install
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+
