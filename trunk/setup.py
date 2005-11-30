@@ -1,5 +1,10 @@
 from setuptools import setup, find_packages
 
+try:
+    import buildutils
+except ImportError:
+    pass
+
 from louie import version
 
 setup(

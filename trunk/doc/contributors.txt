@@ -4,11 +4,11 @@
 
 The following people have contributed code to PyDispatcher and Louie:
 
-* Patrick K. O'Brien
+- Patrick K. O'Brien
 
-* Mike C. Fletcher
+- Mike C. Fletcher
 
-* Matthew R. Scott
+- Matthew R. Scott
 
 
 ..

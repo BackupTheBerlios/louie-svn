@@ -1,6 +1,6 @@
-====================
- About PyDispatcher
-====================
+=======
+ About 
+=======
 
 Louie is based on PyDispatcher_.  Here is a very good detailed
 description of what both PyDispatcher and Louie offer you, based on

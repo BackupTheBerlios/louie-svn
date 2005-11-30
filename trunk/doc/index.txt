@@ -1,6 +1,6 @@
-=============
- About Louie
-=============
+=======
+ Louie
+=======
 
 Louie provides Python programmers with a straightforward way to
 dispatch signals between objects in a wide variety of contexts. It is
@@ -14,14 +14,6 @@ recipe_ in the Python Cookbook.
 .. sectnum::
 
 .. contents::
-
-
-Read more about Louie
-=====================
-
-Further documentation may be found via our `documentation index`_.
-
-.. _documentation index: index.html
 
 
 Installing Louie
@@ -56,30 +48,35 @@ Run this command to upgrade Louie to the latest release::
   easy_install -U Louie
 
 
-Installing Louie from development snapshots
-===========================================
+Development
+===========
 
-Besides using `easy_install`_ for installation, you may also download
-from our snapshots_.
-
-.. _snapshots: http://louie.berlios.de/snapshots/
+You can track the latest changes in Louie using the Subversion
+repository or using regularly-built snapshots.
 
 
-With easy_install
------------------
+Using easy_install
+------------------
 
 Provided you already have `easy_install`, run this command::
 
   easy_install -f http://louie.berlios.de/snapshots/ Louie
 
 
-From a snapshot
----------------
+Using Subversion
+----------------
 
-Download and unpack the desired version from our snapshots_, then run
-this command::
+Check out the Louie trunk as per the `Berlios usage information
+<http://developer.berlios.de/svn/?group_id=5432>`__.
+
+Run this command inside your checkout path::
 
   python setup.py install
+
+Alternatively, you may use Louie directly from your checkout path
+using this command::
+
+  python setup.py develop
 
 
 ..
