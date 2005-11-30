@@ -40,6 +40,8 @@ recipe_ in the Python Cookbook.
 
     url='http://louie.berlios.de/',
 
+    download_url='http://cheeseshop.python.org/pypi/Louie',
+
     license='BSD',
 
     packages=find_packages(exclude=['doc', 'ez_setup', 'examples', 'tests']),
