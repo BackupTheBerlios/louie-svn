@@ -60,7 +60,7 @@ Using easy_install
 
 Provided you already have `easy_install`, run this command::
 
-  easy_install -f http://louie.berlios.de/snapshots/ Louie
+  easy_install -f http://louie.berlios.de/dist/ Louie
 
 
 Using Subversion
