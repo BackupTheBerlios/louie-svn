@@ -30,8 +30,8 @@ def function(receiver):
 
 def robust_apply(receiver, signature, *arguments, **named):
     """Call receiver with arguments and appropriate subset of named.
-    `signature` is the callable used to determine the call signature
-    of the receiver, in case `receiver` is a callable wrapper of the
+    ``signature`` is the callable used to determine the call signature
+    of the receiver, in case ``receiver`` is a callable wrapper of the
     actual receiver."""
     signature, code_object, startIndex = function(signature)
     acceptable = code_object.co_varnames[

@@ -16,8 +16,6 @@ class Plugin(object):
     Plugins are used to extend or alter the behavior of Louie
     in a uniform way without having to modify the Louie code
     itself.
-
-    Common plugins are available in the `plugin` module.
     """
 
     def is_live(self, receiver):

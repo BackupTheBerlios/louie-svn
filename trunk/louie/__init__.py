@@ -1,4 +1,13 @@
 __all__ = [
+    'dispatcher',
+    'error',
+    'plugin',
+    'robustapply',
+    'saferef',
+    'sender',
+    'signal',
+    'version',
+    
     'connect',
     'disconnect',
     'get_all_receivers',
@@ -20,14 +29,17 @@ __all__ = [
     'Signal',
     ]
 
+import louie.dispatcher, louie.error, louie.plugin, louie.robustapply, \
+       louie.saferef, louie.sender, louie.signal, louie.version
+
 from louie.dispatcher import \
      connect, disconnect, get_all_receivers, reset, \
      send, send_exact, send_robust
 
 from louie.plugin import \
      install_plugin, remove_plugin, Plugin, \
-     QtWidgetPlugin, TwistedDispatchPlugin,
+     QtWidgetPlugin, TwistedDispatchPlugin
 
-from louie.sender Anonymous, Any
+from louie.sender import Anonymous, Any
 
 from louie.signal import All, Signal
