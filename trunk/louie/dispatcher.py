@@ -40,7 +40,6 @@ Internal attributes:
     Used for cleaning up receiver references on receiver deletion.
 """
 
-
 import os
 import weakref
 
@@ -406,7 +405,7 @@ def send_exact(signal=All, sender=Anonymous, *arguments, **named):
     return responses
     
 
-def send_robust(signal=Any, sender=Anonymous, *arguments, **named):
+def send_robust(signal=All, sender=Anonymous, *arguments, **named):
     """Send signal from sender to all connected receivers catching errors
 
     signal:
