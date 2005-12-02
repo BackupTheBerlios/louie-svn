@@ -28,10 +28,8 @@ def safe_ref(target, on_delete=None):
             reference = BoundMethodWeakref(target=target, on_delete=on_delete)
             return reference
     if callable(on_delete):
-        print 'returning weakref.ref', target, on_delete
         return weakref.ref(target, on_delete)
     else:
-        print 'returning weakref.ref', target
         return weakref.ref(target)
     
 

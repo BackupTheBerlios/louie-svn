@@ -48,20 +48,6 @@ Naming and Importing
   to PEP-0008.
 
 
-API
----
-
-- The syntax for ``send`` no longer uses positional and named
-  arguments.  Instead, they are passed by setting ``arguments`` to a
-  sequence of positional arguments, and ``named`` to a dictionary of
-  named arguments.
-
-- The syntax for ``connect`` has been extended to allow additional
-  positional and named arguments to be associated with a connection.
-  They are passed to receivers along with any positional and named
-  arguments specified in the call to ``send``.
-
-
 Plug-ins
 --------
 

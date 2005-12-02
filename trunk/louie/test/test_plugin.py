@@ -62,7 +62,7 @@ def test_is_live():
     louie.connect(receiver2a, 'sig')
     louie.connect(receiver2b, 'sig')
     # Check reception without plugins.
-    louie.send('sig', named=dict(arg='foo'))
+    louie.send('sig', arg='foo')
     assert receiver1a.args == ['foo']
     assert receiver1b.args == ['foo']
     assert receiver2a.args == ['foo']
@@ -74,7 +74,7 @@ def test_is_live():
     receiver1a.live = False
     receiver2b.live = False
     # Check reception.
-    louie.send('sig', named=dict(arg='bar'))
+    louie.send('sig', arg='bar')
     assert receiver1a.args == ['foo']
     assert receiver1b.args == ['foo', 'bar']
     assert receiver2a.args == ['foo', 'bar']
@@ -84,7 +84,7 @@ def test_is_live():
     louie.remove_plugin(plugin1)
     louie.install_plugin(plugin2)
     # Check reception.
-    louie.send('sig', named=dict(arg='baz'))
+    louie.send('sig', arg='baz')
     assert receiver1a.args == ['foo', 'baz']
     assert receiver1b.args == ['foo', 'bar', 'baz']
     assert receiver2a.args == ['foo', 'bar']
@@ -92,7 +92,7 @@ def test_is_live():
     # Install plugin 1 alongside plugin 2.
     louie.install_plugin(plugin1)
     # Check reception.
-    louie.send('sig', named=dict(arg='fob'))
+    louie.send('sig', arg='fob')
     assert receiver1a.args == ['foo', 'baz']
     assert receiver1b.args == ['foo', 'bar', 'baz', 'fob']
     assert receiver2a.args == ['foo', 'bar']
@@ -117,14 +117,14 @@ if qt is not None:
         # Destroy receiver2 so only a shell is left.
         receiver2.close(True)
         # Check reception without plugins.
-        louie.send('sig', named=dict(arg='foo'))
+        louie.send('sig', arg='foo')
         assert receiver1.args == ['foo']
         assert receiver2.args == ['foo']
         # Install plugin.
         plugin = louie.QtWidgetPlugin()
         louie.install_plugin(plugin)
         # Check reception with plugins.
-        louie.send('sig', named=dict(arg='bar'))
+        louie.send('sig', arg='bar')
         assert receiver1.args == ['foo', 'bar']
         assert receiver2.args == ['foo']
 

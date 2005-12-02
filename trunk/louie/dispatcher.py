@@ -11,20 +11,19 @@ Internal attributes:
         
 - ``connections``::
 
-    { sender_id (id) : { signal : [receivers...] } }
+    { senderkey (id) : { signal : [receivers...] } }
     
 - ``senders``: Used for cleaning up sender references on sender
   deletion::
 
-    { sender_id (id) : weakref(sender) }
+    { senderkey (id) : weakref(sender) }
     
 - ``senders_back``: Used for cleaning up receiver references on receiver
   deletion::
 
-    { receiver_id (id) : [sender_id (id)...] }
+    { receiverkey (id) : [senderkey (id)...] }
 """
 
-from itertools import izip
 import os
 import weakref
 
@@ -74,8 +73,7 @@ def reset():
     plugins = []
 
 
-def connect(receiver, signal=All, sender=Any, weak=True,
-            arguments=None, named=None):
+def connect(receiver, signal=All, sender=Any, weak=True):
     """Connect ``receiver`` to ``sender`` for ``signal``.
 
     - ``receiver``: A callable Python object which is to receive
@@ -122,65 +120,48 @@ def connect(receiver, signal=All, sender=Any, weak=True,
       the receiver objects.  If this parameter is ``False``, then strong
       references will be used.
 
-    - ``arguments``: Optional sequence of positional arguments to pass
-      to the receiver in addition to positional arguments given to a
-      ``send`` call. The arguments specified here will precede
-      arguments passed given in the ``send`` call.
-
-    - ``named``: Optional dict of named arguments to pass to the
-      receiver in addition to named arguments given to a ``send``
-      call.  Arguments given in a ``send`` call will override these
-      arguments.
-
     Returns ``None``, may raise ``DispatcherTypeError``.
     """
-    if not arguments:
-        arguments = ()
-    if not named:
-        named = {}
     if signal is None:
         raise error.DispatcherTypeError(
             'Signal cannot be None (receiver=%r sender=%r)'
             % (receiver, sender))
     if weak:
         receiver = saferef.safe_ref(receiver, on_delete=_remove_receiver)
-    receiver_id = id(receiver)
-    print 'receiver', receiver, 'is id', receiver_id
-    sender_id = id(sender)
-    print 'sender', sender, 'id is', sender_id
-    if connections.has_key(sender_id):
-        signals = connections[sender_id]
+    senderkey = id(sender)
+    if connections.has_key(senderkey):
+        signals = connections[senderkey]
     else:
-        connections[sender_id] = signals = {}
+        connections[senderkey] = signals = {}
     # Keep track of senders for cleanup.
     # Is Anonymous something we want to clean up?
     if sender not in (None, Anonymous, Any):
-        def remove(object, sender_id=sender_id):
-            _remove_sender(sender_id=sender_id)
+        def remove(object, senderkey=senderkey):
+            _remove_sender(senderkey=senderkey)
         # Skip objects that can not be weakly referenced, which means
         # they won't be automatically cleaned up, but that's too bad.
         try:
             weak_sender = weakref.ref(sender, remove)
-            senders[sender_id] = weak_sender
+            senders[senderkey] = weak_sender
         except:
             pass
+    receiver_id = id(receiver)
     # get current set, remove any current references to
     # this receiver in the set, including back-references
     if signals.has_key(signal):
-        receivers, receiver_args = signals[signal]
-        print 'removing old back refs', id(receiver), receiver
-        _remove_old_back_refs(
-            sender_id, signal, receiver, receivers, receiver_args)
+        receivers = signals[signal]
+        _remove_old_back_refs(senderkey, signal, receiver, receivers)
     else:
-        receivers, receiver_args = signals[signal] = ([], [])
+        receivers = signals[signal] = []
     try:
-        current = senders_back.setdefault(receiver_id, [])
-        if sender_id not in current:
-            current.append(sender_id)
+        current = senders_back.get(receiver_id)
+        if current is None:
+            senders_back[receiver_id] = current = []
+        if senderkey not in current:
+            current.append(senderkey)
     except:
         pass
     receivers.append(receiver)
-    receiver_args.append((arguments, named))
     # Update stats.
     if __debug__:
         global connects
@@ -218,11 +199,10 @@ def disconnect(receiver, signal=All, sender=Any, weak=True):
             % (receiver, sender))
     if weak:
         receiver = saferef.safe_ref(receiver)
-    receiver_id = id(receiver)
-    sender_id = id(sender)
+    senderkey = id(sender)
     try:
-        signals = connections[sender_id]
-        receivers, receiver_args = signals[signal]
+        signals = connections[senderkey]
+        receivers = signals[signal]
     except KeyError:
         raise error.DispatcherKeyError(
             'No receivers found for signal %r from sender %r' 
@@ -230,15 +210,13 @@ def disconnect(receiver, signal=All, sender=Any, weak=True):
             )
     try:
         # also removes from receivers
-        print 'removing old back refs', id(receiver), receiver
-        _remove_old_back_refs(
-            sender_id, signal, receiver, receivers, receiver_args)
+        _remove_old_back_refs(senderkey, signal, receiver, receivers)
     except ValueError:
         raise error.DispatcherKeyError(
             'No connection to receiver %s for signal %s from sender %s'
             % (receiver, signal, sender)
             )
-    _cleanup_connections(sender_id, signal)
+    _cleanup_connections(senderkey, signal)
     # Update stats.
     if __debug__:
         global disconnects
@@ -260,20 +238,19 @@ def get_receivers(sender=Any, signal=All):
     retrieve the actual receiver objects as an iterable object.
     """
     try:
-        receivers, receiver_args = connections[id(sender)][signal]
-        return izip(receivers, receiver_args)
+        return connections[id(sender)][signal]
     except KeyError:
         return []
 
 
-def live_receivers(receivers_and_args):
+def live_receivers(receivers):
     """Filter sequence of receivers to get resolved, live receivers.
 
     This is a generator which will iterate over the passed sequence,
     checking for weak references and resolving them, then returning
     all live receivers.
     """
-    for receiver, args in receivers_and_args:
+    for receiver in receivers:
         if isinstance(receiver, WEAKREF_TYPES):
             # Dereference the weak reference.
             receiver = receiver()
@@ -286,7 +263,7 @@ def live_receivers(receivers_and_args):
                     live = False
                     break
             if live:
-                yield (receiver, args)
+                yield receiver
             
 
 def get_all_receivers(sender=Any, signal=All):
@@ -296,33 +273,32 @@ def get_all_receivers(sender=Any, signal=All):
     sender, each receiver should be produced only once by the
     resulting generator.
     """
-    receivers = set()
-    all_receivers = []
-    all_receivers.extend(get_receivers(sender, signal))
-    all_receivers.extend(get_receivers(sender, All))
-    all_receivers.extend(get_receivers(Any, signal))
-    all_receivers.extend(get_receivers(Any, All))
-    for receiver, args in all_receivers:
-        if receiver:
-            if not receiver in receivers:
-                receivers.add(receiver)
-                yield (receiver, args)
+    receivers = {}
+    for set in (
+        # Get receivers that receive *this* signal from *this* sender.
+        get_receivers(sender, signal),
+        # Add receivers that receive *all* signals from *this* sender.
+        get_receivers(sender, All),
+        # Add receivers that receive *this* signal from *any* sender.
+        get_receivers(Any, signal),
+        # Add receivers that receive *all* signals from *any* sender.
+        get_receivers(Any, All),
+        ):
+        for receiver in set:
+            if receiver: # filter out dead instance-method weakrefs
+                try:
+                    if not receivers.has_key(receiver):
+                        receivers[receiver] = 1
+                        yield receiver
+                except TypeError:
+                    # dead weakrefs raise TypeError on hash...
+                    pass
 
 
-def send(signal=All, arguments=None, named=None, sender=Anonymous):
+def send(signal=All, sender=Anonymous, *arguments, **named):
     """Send ``signal`` from ``sender`` to all connected receivers.
     
     - ``signal``: (Hashable) signal value; see ``connect`` for details.
-
-    - ``arguments``: Positional arguments which will be passed to *all*
-      receivers. Note that this may raise ``TypeError`` if the receivers
-      do not allow the particular arguments.  Note also that arguments
-      are applied before named arguments, so they should be used with
-      care.
-
-    - ``named``: Named arguments which will be filtered according to the
-      parameters of the receivers to only provide those acceptable to
-      the receiver.
 
     - ``sender``: The sender of the signal.
     
@@ -335,36 +311,36 @@ def send(signal=All, arguments=None, named=None, sender=Anonymous):
       Otherwise can be any Python object (normally one registered with
       a connect if you actually want something to occur).
 
+    - ``arguments``: Positional arguments which will be passed to *all*
+      receivers. Note that this may raise ``TypeError`` if the receivers
+      do not allow the particular arguments.  Note also that arguments
+      are applied before named arguments, so they should be used with
+      care.
+
+    - ``named``: Named arguments which will be filtered according to the
+      parameters of the receivers to only provide those acceptable to
+      the receiver.
+
     Return a list of tuple pairs ``[(receiver, response), ...]``
 
     If any receiver raises an error, the error propagates back through
     send, terminating the dispatch loop, so it is quite possible to
     not have all receivers called if a raises an error.
     """
-    if not arguments:
-        arguments = ()
-    if not named:
-        named = {}
     # Call each receiver with whatever arguments it can accept.
     # Return a list of tuple pairs [(receiver, response), ... ].
     responses = []
-    for receiver, args in live_receivers(
-        tuple(get_all_receivers(sender, signal))):
+    for receiver in live_receivers(get_all_receivers(sender, signal)):
         # Wrap receiver using installed plugins.
         original = receiver
         for plugin in plugins:
             receiver = plugin.wrap_receiver(receiver)
-        # Apply additional arguments given for this connection.
-        r_args, r_named = args
-        r_args = tuple(r_args) + tuple(arguments)
-        r_named = r_named.copy()
-        r_named.update(named)
         response = robustapply.robust_apply(
             receiver, original,
             signal=signal,
             sender=sender,
-            *r_args,
-            **r_named
+            *arguments,
+            **named
             )
         responses.append((receiver, response))
     # Update stats.
@@ -374,56 +350,35 @@ def send(signal=All, arguments=None, named=None, sender=Anonymous):
     return responses
 
 
-def send_exact(signal=All, arguments=None, named=None, sender=Anonymous):
+def send_exact(signal=All, sender=Anonymous, *arguments, **named):
     """Send ``signal`` only to receivers registered for exact message.
 
     ``send_exact`` allows for avoiding ``Any``/``Anonymous`` registered
     handlers, sending only to those receivers explicitly registered
     for a particular signal on a particular sender.
     """
-    if not arguments:
-        arguments = ()
-    if not named:
-        named = {}
     responses = []
-    for receiver, args in live_receivers(
-        tuple(get_receivers(sender, signal))
-        ):
+    for receiver in live_receivers(get_receivers(sender, signal)):
         # Wrap receiver using installed plugins.
         original = receiver
         for plugin in plugins:
             receiver = plugin.wrap_receiver(receiver)
-        # Apply additional arguments given for this connection.
-        r_args, r_named = args
-        r_args = tuple(r_args) + tuple(arguments)
-        r_named = r_named.copy()
-        r_named.update(named)
         response = robustapply.robust_apply(
             receiver, original,
             signal=signal,
             sender=sender,
-            *r_args,
-            **r_named
+            *arguments,
+            **named
             )
         responses.append((receiver, response))
     return responses
     
 
-def send_robust(signal=All, arguments=None, named=None, sender=Anonymous):
+def send_robust(signal=All, sender=Anonymous, *arguments, **named):
     """Send ``signal`` from ``sender`` to all connected receivers catching
     errors
 
     - ``signal``: (Hashable) signal value, see connect for details
-
-    - ``arguments``: Positional arguments which will be passed to *all*
-      receivers. Note that this may raise ``TypeError`` if the receivers
-      do not allow the particular arguments.  Note also that arguments
-      are applied before named arguments, so they should be used with
-      care.
-
-    - ``named``: Named arguments which will be filtered according to the
-      parameters of the receivers to only provide those acceptable to
-      the receiver.
 
     - ``sender``: The sender of the signal.
     
@@ -436,38 +391,36 @@ def send_robust(signal=All, arguments=None, named=None, sender=Anonymous):
       Otherwise can be any Python object (normally one registered with
       a connect if you actually want something to occur).
 
+    - ``arguments``: Positional arguments which will be passed to *all*
+      receivers. Note that this may raise ``TypeError`` if the receivers
+      do not allow the particular arguments.  Note also that arguments
+      are applied before named arguments, so they should be used with
+      care.
+
+    - ``named``: Named arguments which will be filtered according to the
+      parameters of the receivers to only provide those acceptable to
+      the receiver.
+
     Return a list of tuple pairs ``[(receiver, response), ... ]``
 
     If any receiver raises an error (specifically, any subclass of
     ``Exception``), the error instance is returned as the result for
     that receiver.
     """
-    if not arguments:
-        arguments = ()
-    if not named:
-        named = {}
     # Call each receiver with whatever arguments it can accept.
     # Return a list of tuple pairs [(receiver, response), ... ].
     responses = []
-    for receiver, args in live_receivers(
-        tuple(get_all_receivers(sender, signal))
-        ):
-        # Wrap receiver using installed plugins.
+    for receiver in live_receivers(get_all_receivers(sender, signal)):
         original = receiver
         for plugin in plugins:
             receiver = plugin.wrap_receiver(receiver)
-        # Apply additional arguments given for this connection.
-        r_args, r_named = args
-        r_args = tuple(r_args) + tuple(arguments)
-        r_named = r_named.copy()
-        r_named.update(named)
         try:
             response = robustapply.robust_apply(
                 receiver, original,
                 signal=signal,
                 sender=sender,
-                *r_args,
-                **r_named
+                *arguments,
+                **named
                 )
         except Exception, err:
             responses.append((receiver, err))
@@ -481,89 +434,83 @@ def _remove_receiver(receiver):
     if not senders_back:
         # During module cleanup the mapping will be replaced with None.
         return False
-    receiver_id = id(receiver)
-    print 'removing receiver', receiver, 'id', receiver_id
-    for sender_id in senders_back.get(receiver_id, ()):
+    backKey = id(receiver)
+    for senderkey in senders_back.get(backKey, ()):
         try:
-            signals = connections[sender_id].keys()
+            signals = connections[senderkey].keys()
         except KeyError:
             pass
         else:
             for signal in signals:
                 try:
-                    receivers, receiver_args = connections[sender_id][signal]
+                    receivers = connections[senderkey][signal]
                 except KeyError:
                     pass
                 else:
                     try:
-                        index = receivers.index(receiver)
-                        del receivers[index]
-                        del receiver_args[index]
+                        receivers.remove(receiver)
                     except Exception:
                         pass
-                _cleanup_connections(sender_id, signal)
+                _cleanup_connections(senderkey, signal)
     try:
-        del senders_back[receiver_id]
+        del senders_back[backKey]
     except KeyError:
         pass
 
             
-def _cleanup_connections(sender_id, signal):
-    """Delete empty signals for ``sender_id``. Delete ``sender_id`` if
+def _cleanup_connections(senderkey, signal):
+    """Delete empty signals for ``senderkey``. Delete ``senderkey`` if
     empty."""
     try:
-        receivers, receiver_args = connections[sender_id][signal]
+        receivers = connections[senderkey][signal]
     except:
         pass
     else:
-        if not receivers and not receiver_args:
+        if not receivers:
             # No more connected receivers. Therefore, remove the signal.
             try:
-                signals = connections[sender_id]
+                signals = connections[senderkey]
             except KeyError:
                 pass
             else:
                 del signals[signal]
                 if not signals:
                     # No more signal connections. Therefore, remove the sender.
-                    _remove_sender(sender_id)
+                    _remove_sender(senderkey)
 
 
-def _remove_sender(sender_id):
-    """Remove ``sender_id`` from connections."""
-    _remove_back_refs(sender_id)
+def _remove_sender(senderkey):
+    """Remove ``senderkey`` from connections."""
+    _remove_back_refs(senderkey)
     try:
-        del connections[sender_id]
+        del connections[senderkey]
     except KeyError:
         pass
-    # Sender_id will only be in senders dictionary if sender 
+    # Senderkey will only be in senders dictionary if sender 
     # could be weakly referenced.
     try:
-        del senders[sender_id]
+        del senders[senderkey]
     except:
         pass
 
 
-def _remove_back_refs(sender_id):
-    """Remove all back-references to this ``sender_id``."""
+def _remove_back_refs(senderkey):
+    """Remove all back-references to this ``senderkey``."""
     try:
-        signals = connections[sender_id]
+        signals = connections[senderkey]
     except KeyError:
         signals = None
     else:
         items = signals.items()
-        def all_receiver_ids():
-            for signal, s in items:
-                receivers, receiver_args = s
-                for receiver in receivers:
-                    yield id(receiver)
-        for receiver_id in all_receiver_ids():
-            print 'killing back ref', receiver_id, sender_id
-            _kill_back_ref(receiver_id, sender_id)
+        def allReceivers():
+            for signal, set in items:
+                for item in set:
+                    yield item
+        for receiver in allReceivers():
+            _kill_back_ref(receiver, senderkey)
 
 
-def _remove_old_back_refs(sender_id, signal, receiver, receivers,
-                          receiver_args):
+def _remove_old_back_refs(senderkey, signal, receiver, receivers):
     """Kill old ``senders_back`` references from ``receiver``.
 
     This guards against multiple registration of the same receiver for
@@ -574,13 +521,12 @@ def _remove_old_back_refs(sender_id, signal, receiver, receivers,
     """
     try:
         index = receivers.index(receiver)
-        # need to scan back references here and remove sender_id
+        # need to scan back references here and remove senderkey
     except ValueError:
         return False
     else:
         old_receiver = receivers[index]
         del receivers[index]
-        del receiver_args[index]
         found = 0
         signals = connections.get(signal)
         if signals is not None:
@@ -591,28 +537,25 @@ def _remove_old_back_refs(sender_id, signal, receiver, receivers,
                             found = 1
                             break
         if not found:
-            print 'killing back ref', id(receiver), sender_id
-            _kill_back_ref(id(receiver), sender_id)
+            _kill_back_ref(old_receiver, senderkey)
             return True
         return False
         
         
-def _kill_back_ref(receiver_id, sender_id):
+def _kill_back_ref(receiver, senderkey):
     """Do actual removal of back reference from ``receiver`` to
-    ``sender_id``."""
-    s = senders_back.get(receiver_id, ())
-    while sender_id in s:
+    ``senderkey``."""
+    receiverkey = id(receiver)
+    set = senders_back.get(receiverkey, ())
+    while senderkey in set:
         try:
-            s.remove(sender_id)
+            set.remove(senderkey)
         except:
-            print 'could not remove', sender_id, 'from', s
             break
-    if not s:
+    if not set:
         try:
-            del senders_back[receiver_id]
+            del senders_back[receiverkey]
         except KeyError:
-            print 'could not del senders_back[', receiver_id, ']'
-            print senders_back
             pass
     return True
 
