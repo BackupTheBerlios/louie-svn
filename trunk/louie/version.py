@@ -3,6 +3,6 @@
 
 NAME = 'Louie'
 DESCRIPTION = 'Signal dispatching mechanism'
-VERSION = '1.0b2'
+VERSION = '1.0b3'
 
 
