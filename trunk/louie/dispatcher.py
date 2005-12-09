@@ -350,6 +350,30 @@ def send(signal=All, sender=Anonymous, *arguments, **named):
     return responses
 
 
+def send_minimal(signal=All, sender=Anonymous, *arguments, **named):
+    """Like ``send``, but does not attach ``signal`` and ``sender``
+    arguments to the call to the receiver."""
+    # Call each receiver with whatever arguments it can accept.
+    # Return a list of tuple pairs [(receiver, response), ... ].
+    responses = []
+    for receiver in live_receivers(get_all_receivers(sender, signal)):
+        # Wrap receiver using installed plugins.
+        original = receiver
+        for plugin in plugins:
+            receiver = plugin.wrap_receiver(receiver)
+        response = robustapply.robust_apply(
+            receiver, original,
+            *arguments,
+            **named
+            )
+        responses.append((receiver, response))
+    # Update stats.
+    if __debug__:
+        global sends
+        sends += 1
+    return responses
+
+
 def send_exact(signal=All, sender=Anonymous, *arguments, **named):
     """Send ``signal`` only to receivers registered for exact message.
 

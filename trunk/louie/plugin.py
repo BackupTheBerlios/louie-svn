@@ -86,11 +86,17 @@ class TwistedDispatchPlugin(Plugin):
         # Don't import reactor ourselves, but make access to it
         # easier.
         from twisted import internet
+        from twisted.internet.defer import Deferred
         self._internet = internet
+        self._Deferred = Deferred
 
     def wrap_receiver(self, receiver):
         def wrapper(*args, **kw):
-            return self._internet.reactor.callLater(0, receiver, *args, **kw)
+            d = self._Deferred()
+            def called(dummy):
+                return receiver(*args, **kw)
+            d.addCallback(called)
+            self._internet.reactor.callLater(0, d.callback, None)
+            return d
         return wrapper
-
 

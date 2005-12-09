@@ -14,6 +14,7 @@ __all__ = [
     'reset',
     'send',
     'send_exact',
+    'send_minimal',
     'send_robust',
 
     'install_plugin',
@@ -34,7 +35,7 @@ import louie.dispatcher, louie.error, louie.plugin, louie.robustapply, \
 
 from louie.dispatcher import \
      connect, disconnect, get_all_receivers, reset, \
-     send, send_exact, send_robust
+     send, send_exact, send_minimal, send_robust
 
 from louie.plugin import \
      install_plugin, remove_plugin, Plugin, \
