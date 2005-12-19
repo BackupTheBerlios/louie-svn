@@ -7,13 +7,23 @@ dispatch signals between objects in a wide variety of contexts. It is
 based on PyDispatcher_, which in turn was based on a highly-rated
 recipe_ in the Python Cookbook.
 
+Louie is licensed under `The BSD License`_.
+
 .. _PyDispatcher: http://pydispatcher.sf.net/
 
 .. _recipe: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/87056
 
+.. _The BSD License: http://opensource.org/licenses/bsd-license.php
+
 .. sectnum::
 
 .. contents::
+
+
+Louie Requirements
+==================
+
+- Python 2.3 or higher.
 
 
 Installing Louie

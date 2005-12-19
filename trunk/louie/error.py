@@ -6,7 +6,7 @@ class DispatcherError(Exception):
     
 
 class DispatcherKeyError(KeyError, DispatcherError):
-    """Error raised when unknown (sender,signal) set specified"""
+    """Error raised when unknown (sender, signal) specified"""
     
 
 class DispatcherTypeError(TypeError, DispatcherError):

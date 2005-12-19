@@ -27,6 +27,11 @@ Internal attributes:
 import os
 import weakref
 
+try:
+    set
+except NameError:
+    from sets import Set as set, ImmutableSet as frozenset
+
 from louie import error
 from louie import robustapply
 from louie import saferef
@@ -273,8 +278,8 @@ def get_all_receivers(sender=Any, signal=All):
     sender, each receiver should be produced only once by the
     resulting generator.
     """
-    receivers = {}
-    for set in (
+    yielded = set()
+    for receivers in (
         # Get receivers that receive *this* signal from *this* sender.
         get_receivers(sender, signal),
         # Add receivers that receive *all* signals from *this* sender.
@@ -284,11 +289,11 @@ def get_all_receivers(sender=Any, signal=All):
         # Add receivers that receive *all* signals from *any* sender.
         get_receivers(Any, All),
         ):
-        for receiver in set:
+        for receiver in receivers:
             if receiver: # filter out dead instance-method weakrefs
                 try:
-                    if not receivers.has_key(receiver):
-                        receivers[receiver] = 1
+                    if not receiver in yielded:
+                        yielded.add(receiver)
                         yield receiver
                 except TypeError:
                     # dead weakrefs raise TypeError on hash...
@@ -525,13 +530,9 @@ def _remove_back_refs(senderkey):
     except KeyError:
         signals = None
     else:
-        items = signals.items()
-        def allReceivers():
-            for signal, set in items:
-                for item in set:
-                    yield item
-        for receiver in allReceivers():
-            _kill_back_ref(receiver, senderkey)
+        for signal, receivers in signals.iteritems():
+            for receiver in receivers:
+                _kill_back_ref(receiver, senderkey)
 
 
 def _remove_old_back_refs(senderkey, signal, receiver, receivers):
@@ -570,13 +571,13 @@ def _kill_back_ref(receiver, senderkey):
     """Do actual removal of back reference from ``receiver`` to
     ``senderkey``."""
     receiverkey = id(receiver)
-    set = senders_back.get(receiverkey, ())
-    while senderkey in set:
+    senders = senders_back.get(receiverkey, ())
+    while senderkey in senders:
         try:
-            set.remove(senderkey)
+            senders.remove(senderkey)
         except:
             break
-    if not set:
+    if not senders:
         try:
             del senders_back[receiverkey]
         except KeyError:

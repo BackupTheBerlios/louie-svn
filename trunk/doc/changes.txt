@@ -17,12 +17,6 @@ Changes from PyDispatcher to Louie 1.0
 ======================================
 
 
-Dependencies
-------------
-
-- Louie requires Python 2.4 or higher.
-
-
 Packaging and Distribution
 --------------------------
 

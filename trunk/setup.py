@@ -47,7 +47,7 @@ recipe_ in the Python Cookbook.
     packages=find_packages(exclude=['doc', 'ez_setup', 'examples', 'tests']),
 
     install_requires=[
-    'nose >= 0.7.5',
+    'nose >= 0.8.3',
     ],
 
     zip_safe=False,
