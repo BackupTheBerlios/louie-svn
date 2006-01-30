@@ -49,6 +49,21 @@ class Plugin2(louie.Plugin):
         return True
 
 
+def test_only_one_instance():
+    louie.reset()
+    plugin1a = Plugin1()
+    plugin1b = Plugin1()
+    louie.install_plugin(plugin1a)
+    # XXX: Move these tests into test cases so we can use unittest's
+    # 'assertRaises' method.
+    try:
+        louie.install_plugin(plugin1b)
+    except louie.error.PluginTypeError:
+        pass
+    else:
+        raise Exception('PluginTypeError not raised')
+
+
 def test_is_live():
     louie.reset()
     # Create receivers.

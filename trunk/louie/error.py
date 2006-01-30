@@ -1,7 +1,11 @@
 """Error types for Louie."""
 
 
-class DispatcherError(Exception):
+class LouieError(Exception):
+    """Base class for all Louie errors"""
+
+
+class DispatcherError(LouieError):
     """Base class for all Dispatcher errors"""
     
 
@@ -12,3 +16,7 @@ class DispatcherKeyError(KeyError, DispatcherError):
 class DispatcherTypeError(TypeError, DispatcherError):
     """Error raised when inappropriate signal-type specified (None)"""
 
+
+class PluginTypeError(TypeError, LouieError):
+    """Error raise when trying to install more than one plugin of a
+    certain type."""

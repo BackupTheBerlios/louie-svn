@@ -1,9 +1,15 @@
 """Common plugins for Louie."""
 
 from louie import dispatcher
+from louie import error
 
 
 def install_plugin(plugin):
+    cls = plugin.__class__
+    for p in dispatcher.plugins:
+        if p.__class__ is cls:
+            raise error.PluginTypeError(
+                'Plugin of type %r already installed.' % cls)
     dispatcher.plugins.append(plugin)
 
 def remove_plugin(plugin):
