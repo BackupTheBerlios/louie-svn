@@ -5,18 +5,11 @@
 # http://winscp.net/eng/docs/scripting
 # -------------------------------------------------------------
 
-# open orbtech.com	
+ open orbtech.com	
 # "orbtech.com" is the name of a WinSCP stored session
 # this session contains any authentication (key, password)
 
-# synchronize remote doc/html /var/www/orbtech/orbtech.com/html/louie
-
-open orbtech.textdrive.com	
-# "orbtech.textdrive.com" is the name of a WinSCP stored session
-# this session contains any authentication (key, password)
-# for the textdrive host (cardero.textdrive.com)
-
-synchronize remote doc/html /users/home/pobrien/domains/louiethedispatcher.org/web/public
+ synchronize remote doc/html /var/www/orbtech/louie.org/html
 
 close
 
