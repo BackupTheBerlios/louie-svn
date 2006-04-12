@@ -9,7 +9,7 @@
 # "orbtech.com" is the name of a WinSCP stored session
 # this session contains any authentication (key, password)
 
- synchronize remote doc/html /var/www/orbtech/louie.org/html
+ synchronize remote doc/html /var/www/orbtech/pylouie.org/html
 
 close
 
